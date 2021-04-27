@@ -1,0 +1,1841 @@
+---
+title: "aarhus_exp_2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## data was saved in 
+load("~/Desktop/copy_2020/social_individual_data_imported.RData")
+
+## Importing data
+
+we have four treatments. individual risk, individual ambiguity, social risk and social ambiguity.
+question is whether situation and information that we have affects risk taking or not?
+
+```{r}
+
+#calculate ambiguity probabilities
+#build cards
+boxamb<-c(rep('a',14),rep('b',15),rep('c',10),rep('d',9),rep('e',7),rep('f',5))
+#mix cards
+boxamb1<-sample(boxamb,60)
+boxamb2<-boxamb1
+proboxamb<-array(NA,dim = c(100,50))
+for (j in 1:100){
+  boxamb1<-boxamb2
+  for (i in 1:50){
+    #count how many you have from a sample
+    tmp<-sample(boxamb1,1)
+    proboxamb[j,i]<-sum(boxamb1==tmp)/length(boxamb1)
+    tmp2<-which(boxamb1==tmp)
+    #remove that sample
+    boxamb1<-boxamb1[-tmp2[1]]
+  }
+}
+prob1<-colMeans(proboxamb)
+prob2<-prob1*2
+prob3<-prob1*3
+prob4<-prob1*4
+probamb<-data.frame('prob1'=prob1,'prob2'=prob2,'prob3'=prob3,'prob4'=prob4)
+
+```
+
+```{r}
+
+#calculate risk probabilities
+#build cards
+boxrsk<-box<-c(rep('a',10),rep('b',10),rep('c',10),rep('d',10),rep('e',10),rep('f',10))
+#mix cards
+boxrsk1<-sample(boxrsk,60)
+boxrsk2<-boxrsk1
+proboxrsk<-array(NA,dim = c(100,50))
+for (j in 1:100){
+  boxrsk1<-boxrsk2
+  for (i in 1:50){
+    #count how many you have from a sample
+    tmp<-sample(boxrsk1,1)
+    proboxrsk[j,i]<-sum(boxrsk1==tmp)/length(boxrsk1)
+    tmp2<-which(boxrsk1==tmp)
+    #remove that sample
+    boxrsk1<-boxrsk1[-tmp2[1]]
+  }
+}
+prob1<-colMeans(proboxrsk)
+prob2<-prob1*2
+prob3<-prob1*3
+prob4<-prob1*4
+probrsk<-data.frame('prob1'=prob1,'prob2'=prob2,'prob3'=prob3,'prob4'=prob4)
+
+
+
+
+```
+
+
+```{r}
+#Importing data
+library("rjson")
+#in windows
+game_path_ind_amb <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\individual\\ambiguity\\g*"
+#in mac
+game_path_ind_amb <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/individual/ambiguity/g*'
+game_name_ind_amb <- Sys.glob(game_path_ind_amb)
+game_data_ind_amb <- lapply(game_name_ind_amb, function(x) fromJSON(file=x)) 
+#in windows
+participant_path_ind_amb <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\individual\\ambiguity\\p*"
+#in mac
+participant_path_ind_amb <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/individual/ambiguity/p*'
+participant_name_ind_amb <- Sys.glob(participant_path_ind_amb)
+participant_data_ind_amb <- lapply(participant_name_ind_amb, function(x) fromJSON(file=x)) 
+
+#in windows
+game_path_ind_rsk <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\individual\\risky\\g*"
+#in mac
+game_path_ind_rsk <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/individual/risky/g*'
+game_name_ind_rsk <- Sys.glob(game_path_ind_rsk)
+game_data_ind_rsk <- lapply(game_name_ind_rsk, function(x) fromJSON(file=x)) 
+#in windows
+participant_path_ind_rsk <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\individual\\risky\\p*"
+#in mac
+participant_path_ind_rsk <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/individual/risky/p*'
+
+participant_name_ind_rsk <- Sys.glob(participant_path_ind_rsk)
+participant_data_ind_rsk <- lapply(participant_name_ind_rsk, function(x) fromJSON(file=x)) 
+# in windows
+game_path_soc_amb <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\social\\ambiguity\\g*"
+#in mac
+game_path_soc_amb <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/social/ambiguity/g*'
+game_name_soc_amb <- Sys.glob(game_path_soc_amb)
+game_data_soc_amb <- lapply(game_name_soc_amb, function(x) fromJSON(file=x)) 
+#in windows
+participant_path_soc_amb <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\social\\ambiguity\\p*"
+#in mac
+participant_path_soc_amb <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/social/ambiguity/p*'
+
+participant_name_soc_amb <- Sys.glob(participant_path_soc_amb)
+participant_data_soc_amb <- lapply(participant_name_soc_amb, function(x) fromJSON(file=x)) 
+#in windows
+game_path_soc_rsk <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\social\\risky\\g*"
+# in mac
+game_path_soc_rsk <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/social/risky/g*'
+
+game_name_soc_rsk <- Sys.glob(game_path_soc_rsk)
+game_data_soc_rsk <- lapply(game_name_soc_rsk, function(x) fromJSON(file=x)) 
+#in windows
+participant_path_soc_rsk <- "C:\\Users\\Arezoo\\Dropbox\\Experiment-Aarhus\\expaarhus201920\\social\\risky\\p*"
+#in mac
+participant_path_soc_rsk <- '/Users/au608780/Dropbox/Experiment-Aarhus/expaarhus201920/social/risky/p*'
+
+participant_name_soc_rsk <- Sys.glob(participant_path_soc_rsk)
+participant_data_soc_rsk <- lapply(participant_name_soc_rsk, function(x) fromJSON(file=x)) 
+# remove chracters from workspace
+rm( list = ls()[ sapply( ls(), exists, mode="character")] )
+```
+
+
+
+
+```{r}
+#import saved data
+load("~/Desktop/copy_2020/social_individual_data_imported.RData")
+# import dospert
+library(tidyverse)
+#dospert <- read.csv("~/Downloads/Domain-Specific Risk-Taking (Adult) Scale – Risk Taking_October 17, 2020_00.40.csv")
+dospertnew <- dospert %>% select(18:48)
+remove(dospert)
+dospert <- dospertnew[-c(1,2), ]
+names(dospert)[31] <- 'id'
+
+for (i in 1:30){
+  dospert[ ,i] <- as.numeric(dospert[ ,i])
+}
+for (j in 1:nrow(dospert)){
+  dospert$ethical[j] <- dospert[j,6] + dospert[j,9] + dospert[j,10] + dospert[j,16] + dospert[j,29] + dospert[j,30]
+  dospert$financial[j] <- dospert[j,12] + dospert[j,4] + dospert[j,18] + dospert[j,3] + dospert[j,14] + dospert[j,8]
+  dospert$health[j] <- dospert[j,5] + dospert[j,15] + dospert[j,17] + dospert[j,20] + dospert[j,23] + dospert[j,26]
+  dospert$recreational[j] <- dospert[j,2] + dospert[j,11] + dospert[j,13] + dospert[j,19] + dospert[j,24] + dospert[j,25]
+  dospert$social[j] <- dospert[j,1] + dospert[j,7] + dospert[j,21] + dospert[j,22] + dospert[j,27] + dospert[j,28]
+  dospert$gambling[j] <- dospert[j,3] + dospert[j,14] + dospert[j,8]
+  dospert$investment[j] <- dospert[j,12] + dospert[j,4] + dospert[j,18]
+}
+dospert <- dospert %>% select(31:38)
+dospert[30,1] <- "-rAZELrHF"
+dospert[17,1] <- "-HU-qcYcd5"
+
+```
+
+
+
+
+## Counting Choice
+# individual ambiguity choice counting
+```{r}
+##### individual ambiguity choice counting
+dospert[which(dospert$id == participant_data_ind_amb[[1]][[2]][["id"]]), ] <- NA
+participant_data_ind_amb[[1]][[2]] <- NULL #remove because of data loss
+#remove from dospert
+
+player_number_game_data_ind_amb <- NULL
+tmprounddata <- NULL
+ind_amb_choice <- array(NA, dim=c(length(participant_data_ind_amb),50,5))
+ind_amb_score <- array(NA, dim=c(length(participant_data_ind_amb),50,5))
+ind_amb_person <- array(NA, dim=c(length(participant_data_ind_amb),50,5))
+participant_id_ind_amb <- array(NA, dim=c(length(participant_data_ind_amb),50,5)) 
+rounddata <- NULL
+testdata <- NULL
+choice_number <- NULL
+
+for (i in 1:length(participant_data_ind_amb))
+{
+  player_number_game_data_ind_amb[i] <- game_data_ind_amb[[i]][["maxPlayers"]]
+}
+#group of participants
+for (i in 1:length(participant_data_ind_amb))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      if ((k >player_number_game_data_ind_amb[i])) 
+      {
+        ind_amb_choice[i,j,k] <- NA
+      }
+      else{
+        if (length(game_data_ind_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]]) != 0){
+          
+          ind_amb_choice[i,j,k]<-(length(game_data_ind_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["selectedColors"]]))
+          
+          
+          ind_amb_score[i,j,k]<-(game_data_ind_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]])
+          
+          participant_id_ind_amb[i,j,k]<-(game_data_ind_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["clientId"]])
+          
+          
+        } 
+      }
+    }
+  }
+}
+```
+
+
+```{r}
+######
+#ind_amb
+participant_number <-1
+group_name <- 'ind_amb'
+#ind_amb_choice[ind_amb_choice==1]<- 5
+#ind_amb_choice[ind_amb_choice==4]<- 1
+#ind_amb_choice[ind_amb_choice==5]<- 4
+#ind_amb_choice[ind_amb_choice==2]<- 5
+#ind_amb_choice[ind_amb_choice==3]<- 2
+#ind_amb_choice[ind_amb_choice==5]<- 3
+tmplist <- list()
+tmprow <- list()
+trial_max<- NA
+trial_min<- NA
+trial_mean<- NA
+for (i in 1:length(participant_data_ind_amb)){
+  datalist <- list()
+  rowdata <- list()
+  for (k in 1:player_number_game_data_ind_amb[i]) # participants
+  {
+    personclk <- array(0,50)
+    round_number <- 1:50
+    trialscore<-ind_amb_score[i,round_number,k]
+    personclk <- ind_amb_person[i,round_number,k]
+    risk <- ind_amb_choice[i,round_number,k]
+    probab<-array(NA,50)
+    for (z1 in 1:length(risk)){
+      if (!is.na(risk[z1])){
+    if (risk[z1] == 4){
+      probab[z1]<-probamb$prob4[z1]
+    }else if (risk[z1] == 3){
+      probab[z1]<-probamb$prob3[z1]
+    }else if (risk[z1] == 2){
+      probab[z1]<-probamb$prob2[z1]
+    }else if (risk[z1] == 1){
+      probab[z1]<-probamb$prob1[z1]
+    }
+      }
+    }
+    id <- participant_id_ind_amb[i,round_number,k]
+    idclk <- NA
+    d <- (data.frame('participant_number'= participant_number,'id'=id,'group_name'= group_name,'round_number'= round_number,'risk'=risk,'probability'=probab,'round_score'=trialscore,'person_click'= personclk,'id_click'=idclk,'data_gathering_group'=i,'data_gathering_participant_id'= k,'other_max_score'=trial_max,'other_min_score'=trial_min,'other_mean_score'=trial_mean))
+r<-data.frame('id'=id[1],'group_name'= group_name,'risk'=mean(risk,na.rm=TRUE),'round_score'=mean(trialscore,na.rm=TRUE),'person_click'= mean(personclk,na.rm=TRUE),'other_max_score'=trial_max,'other_min_score'=trial_min,'other_mean_score'=trial_mean)
+
+    datalist[[k]] <- d
+    rowdata[[k]]<- r
+    participant_number <- participant_number + 1
+  }
+  tmplist[[i]] <- dplyr::bind_rows(datalist)
+  tmprow[[i]] <- dplyr::bind_rows(rowdata)
+}
+big_ind_amb <- dplyr::bind_rows(tmplist)
+big_ind_amb_row <- dplyr::bind_rows(tmprow)
+#big_ind_amb$person_click[round_number == 50] <- 0
+#big_person <-  dplyr::bind_rows(big_person_ind_amb,big_person_ind_amb)
+#####
+ind_amb_gender<-NA
+ind_amb_age <-NA
+ind_amb_id<-NA
+z<-1
+for (i in 1:length(participant_data_ind_amb)){
+  for (j in 1:length(participant_data_ind_amb[[i]])){
+    ind_amb_gender[z]<-(participant_data_ind_amb[[i]][[j]][["gender"]])
+    ind_amb_age[z]<-(participant_data_ind_amb[[i]][[j]][["age"]])
+    ind_amb_id[z]<-(participant_data_ind_amb[[i]][[j]][["id"]])
+    z<-z+1
+  }
+}
+ind_amb_age_gender<-data.frame('id'=ind_amb_id,'gender'=ind_amb_gender,'age'=ind_amb_age)
+big_ind_amb <- merge(unique(big_ind_amb),(ind_amb_age_gender),by="id",all = TRUE)
+big_ind_amb_row <- merge(unique(big_ind_amb_row),(ind_amb_age_gender),by="id",all = TRUE)
+
+big_ind_amb<-big_ind_amb[-which(is.na(big_ind_amb$risk)),]
+#big_ind_amb_row<-big_ind_amb_row[-which(is.na(big_ind_amb_row$risk)),]
+
+```
+
+
+# individual risky choice counting
+```{r}
+##### individual risky choice counting
+
+#dospert[which(dospert$id == participant_data_ind_rsk[[9]][[2]][["id"]]), ] <- NA
+
+
+##### this person's data is not complete _EWdQ-qcy
+tmp <- participant_data_ind_rsk[[3]][[1]]
+participant_data_ind_rsk[[3]][[1]] <- participant_data_ind_rsk[[3]][[2]]
+participant_data_ind_rsk[[3]][[2]] <- tmp
+dospert[which(dospert$id == participant_data_ind_rsk[[3]][[1]][["id"]]), ] <- NA
+participant_data_ind_rsk[[3]][[1]] <- NULL
+game_data_ind_rsk[[3]][["maxPlayers"]] <-2 
+#####
+participant_data_ind_rsk[[13]] <- NULL #data loss
+game_data_ind_rsk[[13]] <- NULL #data loss
+
+participant_data_ind_rsk[[5]][[3]] <- NULL
+game_data_ind_rsk[[5]][["maxPlayers"]] <-2 
+dospert[which(dospert$id == participant_data_ind_rsk[[9]][[2]][["id"]]), ] <- NA
+participant_data_ind_rsk[[9]][[2]] <- NULL
+game_data_ind_rsk[[9]][["maxPlayers"]] <- game_data_ind_rsk[[9]][["maxPlayers"]] -1
+
+player_number_game_data_ind_rsk <- NULL
+tmprounddata <- NULL
+ind_rsk_choice <- array(NA, dim=c(length(participant_data_ind_rsk),50,5))
+ind_rsk_score <- array(NA, dim=c(length(participant_data_ind_rsk),50,5))
+ind_rsk_person <- array(NA, dim=c(length(participant_data_ind_rsk),50,5))
+participant_id_ind_rsk <- array(NA, dim=c(length(participant_data_ind_rsk),50,5)) 
+rounddata <- NULL
+testdata <- NULL
+choice_number <- NULL
+
+for (i in 1:length(participant_data_ind_rsk))
+{
+  player_number_game_data_ind_rsk[i] <- game_data_ind_rsk[[i]][["maxPlayers"]]
+}
+#group of participants
+for (i in 1:length(participant_data_ind_rsk))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      if ((k >player_number_game_data_ind_rsk[i])) 
+      {
+        ind_rsk_choice[i,j,k] <- NA
+      }
+      else{
+        if (length(game_data_ind_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]]) != 0){
+      
+      ind_rsk_choice[i,j,k]<-(length(game_data_ind_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["selectedColors"]]))
+      
+      
+      ind_rsk_score[i,j,k]<-(game_data_ind_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]])
+      
+      participant_id_ind_rsk[i,j,k]<-(game_data_ind_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["clientId"]])
+      
+     
+        } 
+    }
+  }
+  }
+}
+######
+#ind_rsk
+participant_number <-1
+group_name <- 'ind_rsk'
+
+#ind_rsk_choice[ind_rsk_choice==1]<- 5
+#ind_rsk_choice[ind_rsk_choice==4]<- 1
+#ind_rsk_choice[ind_rsk_choice==5]<- 4
+#ind_rsk_choice[ind_rsk_choice==2]<- 5
+#ind_rsk_choice[ind_rsk_choice==3]<- 2
+#ind_rsk_choice[ind_rsk_choice==5]<- 3
+
+tmplist <- list()
+tmprow <- list()
+trial_max<- NA
+trial_min<- NA
+trial_mean<- NA
+for (i in 1:length(participant_data_ind_rsk)){
+  datalist <- list()
+  rowdata <- list()
+  for (k in 1:player_number_game_data_ind_rsk[i]) # participants
+  {
+    personclk <- array(0,50)
+    round_number <- 1:50
+    trialscore<-ind_rsk_score[i,round_number,k]
+    personclk <- ind_rsk_person[i,round_number,k]
+    risk <- ind_rsk_choice[i,round_number,k]
+       probab<-array(NA,50)
+    for (z1 in 1:length(risk)){
+      if (!is.na(risk[z1])){
+    if (risk[z1] == 4){
+      probab[z1]<-probrsk$prob4[z1]
+    }else if (risk[z1] == 3){
+      probab[z1]<-probrsk$prob3[z1]
+    }else if (risk[z1] == 2){
+      probab[z1]<-probrsk$prob2[z1]
+    }else if (risk[z1] == 1){
+      probab[z1]<-probrsk$prob1[z1]
+    }
+      }
+    }
+    id <- participant_id_ind_rsk[i,round_number,k]
+   idclk <- NA
+   r<-data.frame('id'=id[1],'group_name'= group_name,'risk'=mean(risk,na.rm=TRUE),'round_score'=mean(trialscore,na.rm=TRUE),'person_click'= mean(personclk,na.rm=TRUE),'other_max_score'=trial_max,'other_min_score'=trial_min,'other_mean_score'=trial_mean)
+    d <- (data.frame('participant_number'= participant_number,'id'=id,'group_name'= group_name,'round_number'= round_number,'risk'=risk,'probability'=probab,'round_score'=trialscore,'person_click'= personclk,'id_click'=idclk,'data_gathering_group'=i,'data_gathering_participant_id'= k,'other_max_score'=trial_max,'other_min_score'=trial_min,'other_mean_score'=trial_mean))
+    datalist[[k]] <- d
+    rowdata[[k]]<- r
+    participant_number <- participant_number + 1
+  }
+  tmplist[[i]] <- dplyr::bind_rows(datalist)
+  tmprow[[i]] <- dplyr::bind_rows(rowdata)
+}
+big_ind_rsk <- dplyr::bind_rows(tmplist)
+big_ind_rsk_row <- dplyr::bind_rows(tmprow)
+#big_ind_rsk$person_click[round_number == 50] <- 0
+#big_person <-  dplyr::bind_rows(big_person_ind_rsk,big_person_ind_rsk)
+#####
+ind_rsk_gender<-NA
+ind_rsk_age <-NA
+ind_rsk_id<-NA
+z<-1
+for (i in 1:length(participant_data_ind_rsk)){
+  for (j in 1:length(participant_data_ind_rsk[[i]])){
+    ind_rsk_gender[z]<-(participant_data_ind_rsk[[i]][[j]][["gender"]])
+    ind_rsk_age[z]<-(participant_data_ind_rsk[[i]][[j]][["age"]])
+    ind_rsk_id[z]<-(participant_data_ind_rsk[[i]][[j]][["id"]])
+    z<-z+1
+  }
+}
+ind_rsk_age_gender<-data.frame('id'=ind_rsk_id,'gender'=ind_rsk_gender,'age'=ind_rsk_age)
+big_ind_rsk <- merge(unique(big_ind_rsk),(ind_rsk_age_gender),by="id",all = TRUE)
+big_ind_rsk_row <- merge(unique(big_ind_rsk_row),(ind_rsk_age_gender),by="id",all = TRUE)
+big_ind_rsk_row<-big_ind_rsk_row[-which(is.na(big_ind_rsk_row$risk)),]
+big_ind_rsk<-big_ind_rsk[-which(is.na(big_ind_rsk$risk)),]
+```
+
+
+# social ambiguity choice counting
+```{r}
+##### social ambiguity choice counting
+
+player_number_game_data_soc_amb <- NULL
+tmprounddata <- NULL
+soc_amb_choice <- array(NA, dim=c(5,50,5))
+soc_amb_score <- array(NA, dim=c(5,50,5))
+soc_amb_person <- array(NA, dim=c(5,50,5))
+soc_amb_id_person <- array(NA, dim=c(5,50,5))
+participant_id_soc_amb <- array(NA, dim=c(5,50,5)) 
+rounddata <- NULL
+testdata <- NULL
+choice_number <- NULL
+
+for (i in 1:length(participant_data_soc_amb))
+{
+  player_number_game_data_soc_amb[i] <- game_data_soc_amb[[i]][["maxPlayers"]]
+}
+#group of participants
+for (i in 1:length(participant_data_soc_amb))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      soc_amb_choice[i,j,k]<-(length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["selectedColors"]]))
+      
+      
+      soc_amb_score[i,j,k]<-(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]])
+      
+      participant_id_soc_amb[i,j,k]<-(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["clientId"]])
+      if (j !=50){
+      if (length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]) != 0 ){
+        soc_amb_person[i,j,k]<-(length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]))
+        #  soc_amb_other_scores[i,j,k]
+        soc_amb_id_person[i,j,k]<-paste((game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]),collapse=",")
+      }
+      }
+      
+    }
+  }
+}
+
+# find average & max scores of the other participants in each round
+trial_mean_soc_amb <- array(NA,c(5,50,5))
+trial_max_soc_amb <- array(NA,c(5,50,5))
+trial_min_soc_amb <- array(NA,c(5,50,5))
+nxt_risk_soc_amb <- array(NA,c(5,50,5))
+
+#soc_amb_choice[soc_amb_choice==1]<- 5
+#soc_amb_choice[soc_amb_choice==4]<- 1
+#soc_amb_choice[soc_amb_choice==5]<- 4
+#soc_amb_choice[soc_amb_choice==2]<- 5
+#soc_amb_choice[soc_amb_choice==3]<- 2
+#soc_amb_choice[soc_amb_choice==5]<- 3
+
+
+for (i in 1:length(participant_data_soc_amb)){ #on groups
+  datalist <- list()
+  
+  for (j in 1:max(round_number)) {
+    tmparr <- 0
+    for (k in 1:5)
+      # on participants
+    {
+      tmparr <- soc_amb_score[i,j,]
+      trial_mean_soc_amb[i,j,k] <- mean(tmparr[! tmparr %in% soc_amb_score[i,j,k] | duplicated (tmparr)])
+      trial_max_soc_amb[i,j,k] <- max(tmparr[! tmparr %in% soc_amb_score[i,j,k] | duplicated (tmparr)])
+      trial_min_soc_amb[i,j,k] <- min(tmparr[! tmparr %in% soc_amb_score[i,j,k] | duplicated (tmparr)])
+      if(j !=50){
+        nxt_risk_soc_amb[i,j,k] <- soc_amb_choice[i,j+1,k]
+      }
+      else
+        nxt_risk_soc_amb[i,j,k] <- NA
+    }
+  }
+}
+
+
+#soc_amb
+participant_number <-1
+group_name <- 'soc_amb'
+tmplist <- list()
+tmprow <- list()
+trial_max <- array(NA,c(5,50,5))
+trial_min <- array(NA,c(5,50,5))
+trial_mean <- array(NA,c(5,50,5))
+for (i in 1:length(participant_data_soc_amb)){
+  datalist <- list()
+  rowdata <- list()
+  for (k in 1:player_number_game_data_soc_amb[i]) # participants
+  {
+    personclk <- array(0,50)
+    round_number <- 1:50
+    trial_max<- trial_max_soc_amb[i,round_number,k]
+    trial_min<- trial_min_soc_amb[i,round_number,k]
+    trial_mean<- trial_mean_soc_amb[i,round_number,k]
+    trialscore<-soc_amb_score[i,round_number,k]
+    personclk <- soc_amb_person[i,round_number,k]
+    idclk <- soc_amb_id_person[i,round_number,k]
+    risk <- soc_amb_choice[i,round_number,k]
+       probab<-array(NA,50)
+    for (z1 in 1:length(risk)){
+      if (!is.na(risk[z1])){
+    if (risk[z1] == 4){
+      probab[z1]<-probamb$prob4[z1]
+    }else if (risk[z1] == 3){
+      probab[z1]<-probamb$prob3[z1]
+    }else if (risk[z1] == 2){
+      probab[z1]<-probamb$prob2[z1]
+    }else if (risk[z1] == 1){
+      probab[z1]<-probamb$prob1[z1]
+    }
+      }
+    }
+    id <- participant_id_soc_amb[i,round_number,k]
+    d <- (data.frame('participant_number'= participant_number,'id'=id,'group_name'= group_name,'round_number'= round_number,'risk'=risk,'probability'=probab,'round_score'=trialscore,'person_click'= personclk,'id_click'=idclk,'data_gathering_group'=i,'data_gathering_participant_id'= k,'other_max_score'=trial_max,'other_min_score'=trial_min,'other_mean_score'=trial_mean))
+    r<-data.frame('id'=id[1],'group_name'= group_name,'risk'=mean(risk,na.rm=TRUE),'round_score'=mean(trialscore,na.rm=TRUE),'person_click'= mean(personclk,na.rm=TRUE),'other_max_score'=mean(trial_max,na.rm=TRUE),'other_min_score'=mean(trial_min,na.rm=TRUE),'other_mean_score'=mean(trial_mean,na.rm=TRUE))
+
+    datalist[[k]] <- d
+    rowdata[[k]]<- r
+    participant_number <- participant_number + 1
+  }
+  tmplist[[i]] <- dplyr::bind_rows(datalist)
+  tmprow[[i]] <- dplyr::bind_rows(rowdata)
+}
+big_soc_amb <- dplyr::bind_rows(tmplist)
+big_soc_amb_row <- dplyr::bind_rows(tmprow)
+#big_soc_amb$person_click[round_number == 50] <- 0
+#big_person <-  dplyr::bind_rows(big_person_soc_amb,big_person_soc_amb)
+#####
+soc_amb_gender<-NA
+soc_amb_age <-NA
+soc_amb_id<-NA
+z<-1
+for (i in 1:length(participant_data_soc_amb)){
+  for (j in 1:length(participant_data_soc_amb[[i]])){
+    soc_amb_gender[z]<-(participant_data_soc_amb[[i]][[j]][["gender"]])
+    soc_amb_age[z]<-(participant_data_soc_amb[[i]][[j]][["age"]])
+    soc_amb_id[z]<-(participant_data_soc_amb[[i]][[j]][["id"]])
+    z<-z+1
+  }
+}
+soc_amb_age_gender<-data.frame('id'=soc_amb_id,'gender'=soc_amb_gender,'age'=soc_amb_age)
+big_soc_amb <- merge(unique(big_soc_amb),(soc_amb_age_gender),by="id",all = TRUE)
+big_soc_amb_row <- merge(unique(big_soc_amb_row),(soc_amb_age_gender),by="id",all = TRUE)
+#big_soc_amb<-big_soc_amb[-which(is.na(big_soc_amb$risk)),]
+#big_soc_amb_row<-big_soc_amb_row[-which(is.na(big_soc_amb_row$risk)),]
+
+
+
+```
+
+# social risky choice counting
+```{r}
+##### social risky choice counting
+player_number_game_data_soc_rsk <- NULL
+tmprounddata <- NULL
+soc_rsk_choice <- array(NA, dim=c(5,50,5))
+soc_rsk_score <- array(NA, dim=c(5,50,5))
+soc_rsk_person <- array(NA, dim=c(5,50,5))
+soc_rsk_id_person <- array(NA, dim=c(5,50,5))
+participant_id_soc_rsk <- array(NA, dim=c(5,50,5)) 
+rounddata <- NULL
+testdata <- NULL
+choice_number <- NULL
+
+for (i in 1:length(participant_data_soc_rsk))
+{
+  player_number_game_data_soc_rsk[i] <- game_data_soc_rsk[[i]][["maxPlayers"]]
+}
+#group of participants
+for (i in 1:length(participant_data_soc_rsk))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      soc_rsk_choice[i,j,k]<-(length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["selectedColors"]]))
+      
+      
+      soc_rsk_score[i,j,k]<-(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]])
+      
+      participant_id_soc_rsk[i,j,k]<-(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["clientId"]])
+      if (j !=50){
+      if (length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]) != 0 ){
+        soc_rsk_person[i,j,k]<-(length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]))
+        #  soc_rsk_other_scores[i,j,k]
+        soc_rsk_id_person[i,j,k]<-paste((game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]),collapse=",")
+      }
+      }
+      
+    }
+  }
+}
+
+
+
+trial_mean_soc_rsk <- array(NA,c(5,50,5))
+trial_max_soc_rsk <- array(NA,c(5,50,5))
+trial_min_soc_rsk <- array(NA,c(5,50,5))
+nxt_risk_soc_rsk <- array(NA,c(5,50,5))
+
+#soc_rsk_choice[soc_rsk_choice==1]<- 5
+#soc_rsk_choice[soc_rsk_choice==4]<- 1
+#soc_rsk_choice[soc_rsk_choice==5]<- 4
+#soc_rsk_choice[soc_rsk_choice==2]<- 5
+#soc_rsk_choice[soc_rsk_choice==3]<- 2
+#soc_rsk_choice[soc_rsk_choice==5]<- 3
+
+
+for (i in 1:length(participant_data_soc_rsk)){ #on groups
+  datalist <- list()
+  
+  for (j in 1:max(round_number)) {
+    tmparr <- 0
+    for (k in 1:5)
+      # on participants
+    {
+      tmparr <- soc_rsk_score[i,j,]
+      trial_mean_soc_rsk[i,j,k] <- mean(tmparr[! tmparr %in% soc_rsk_score[i,j,k] | duplicated (tmparr)])
+      trial_max_soc_rsk[i,j,k] <- max(tmparr[! tmparr %in% soc_rsk_score[i,j,k] | duplicated (tmparr)])
+      trial_min_soc_rsk[i,j,k] <- min(tmparr[! tmparr %in% soc_rsk_score[i,j,k] | duplicated (tmparr)])
+      if(j !=50){
+        nxt_risk_soc_rsk[i,j,k] <- soc_rsk_choice[i,j+1,k]
+      }
+      else
+        nxt_risk_soc_rsk[i,j,k] <- NA
+    }
+  }
+}
+
+
+#soc_rsk
+participant_number <-1
+group_name <- 'soc_rsk'
+tmplist <- list()
+tmprow <- list()
+trial_max <- array(NA,c(5,50,5))
+trial_min <- array(NA,c(5,50,5))
+trial_mean <- array(NA,c(5,50,5))
+for (i in 1:length(participant_data_soc_rsk)){
+  datalist <- list()
+  rowdata <- list()
+  for (k in 1:player_number_game_data_soc_rsk[i]) # participants
+  {
+    personclk <- array(0,50)
+    round_number <- 1:50
+    trial_max<- trial_max_soc_rsk[i,round_number,k]
+    trial_min<- trial_min_soc_rsk[i,round_number,k]
+    trial_mean<- trial_mean_soc_rsk[i,round_number,k]
+    trialscore<-soc_rsk_score[i,round_number,k]
+    personclk <- soc_rsk_person[i,round_number,k]
+    idclk <- soc_rsk_id_person[i,round_number,k]
+    risk <- soc_rsk_choice[i,round_number,k]
+       probab<-array(NA,50)
+    for (z1 in 1:length(risk)){
+      if (!is.na(risk[z1])){
+    if (risk[z1] == 4){
+      probab[z1]<-probrsk$prob4[z1]
+    }else if (risk[z1] == 3){
+      probab[z1]<-probrsk$prob3[z1]
+    }else if (risk[z1] == 2){
+      probab[z1]<-probrsk$prob2[z1]
+    }else if (risk[z1] == 1){
+      probab[z1]<-probrsk$prob1[z1]
+    }
+      }
+    }
+    id <- participant_id_soc_rsk[i,round_number,k]
+    d <- (data.frame('participant_number'= participant_number,'id'=id,'group_name'= group_name,'round_number'= round_number,'risk'=risk,'probability'=probab,'round_score'=trialscore,'person_click'= personclk,'id_click'=idclk,'data_gathering_group'=i,'data_gathering_participant_id'= k,'other_max_score'=trial_max,'other_min_score'=trial_min,'other_mean_score'=trial_mean))
+    r<-data.frame('id'=id[1],'group_name'= group_name,'risk'=mean(risk,na.rm=TRUE),'round_score'=mean(trialscore,na.rm=TRUE),'person_click'= mean(personclk,na.rm=TRUE),'other_max_score'=mean(trial_max,na.rm=TRUE),'other_min_score'=mean(trial_min,na.rm=TRUE),'other_mean_score'=mean(trial_mean,na.rm=TRUE))
+
+    datalist[[k]] <- d
+    rowdata[[k]]<- r
+    participant_number <- participant_number + 1
+  }
+  tmplist[[i]] <- dplyr::bind_rows(datalist)
+  tmprow[[i]] <- dplyr::bind_rows(rowdata)
+}
+big_soc_rsk <- dplyr::bind_rows(tmplist)
+big_soc_rsk_row <- dplyr::bind_rows(tmprow)
+#big_soc_rsk$person_click[round_number == 50] <- 0
+#big_person <-  dplyr::bind_rows(big_person_soc_rsk,big_person_soc_rsk)
+#####
+soc_rsk_gender<-NA
+soc_rsk_age <-NA
+soc_rsk_id<-NA
+z<-1
+for (i in 1:length(participant_data_soc_rsk)){
+  for (j in 1:length(participant_data_soc_rsk[[i]])){
+    soc_rsk_gender[z]<-(participant_data_soc_rsk[[i]][[j]][["gender"]])
+    soc_rsk_age[z]<-(participant_data_soc_rsk[[i]][[j]][["age"]])
+    soc_rsk_id[z]<-(participant_data_soc_rsk[[i]][[j]][["id"]])
+    z<-z+1
+  }
+}
+soc_rsk_age_gender<-data.frame('id'=soc_rsk_id,'gender'=soc_rsk_gender,'age'=soc_rsk_age)
+big_soc_rsk <- merge(unique(big_soc_rsk),(soc_rsk_age_gender),by="id",all = TRUE)
+big_soc_rsk_row <- merge(unique(big_soc_rsk_row),(soc_rsk_age_gender),by="id",all = TRUE)
+
+
+
+```
+
+```{r}
+#ask if its correct?
+# to make all the same size, select size of the lowest one 
+#big_data <- dplyr::bind_rows(big_ind_rsk[1:1000, ],big_ind_amb[1:1000, ],big_soc_rsk[1:1000, ],big_soc_amb[1:1000, ])
+###make dataframe of all
+big_data <- dplyr::bind_rows(big_ind_rsk,big_ind_amb,big_soc_rsk,big_soc_amb)
+big_data_row <- dplyr::bind_rows(big_ind_rsk_row,big_ind_amb_row,big_soc_rsk_row,big_soc_amb_row)
+big_data$gender[big_data$gender=='Female'| big_data$gender=='F' |big_data$gender=='female'| big_data$gender=='FEMALE'| big_data$gender=='Woman']<-'f'
+big_data$gender[big_data$gender=='Male'| big_data$gender=='M' |big_data$gender=='male'|big_data$gender=='MALE']<-'m'
+
+big_data_row$gender[big_data_row$gender=='Female'| big_data_row$gender=='F' |big_data_row$gender=='female'| big_data_row$gender=='FEMALE'| big_data_row$gender=='Woman']<-'f'
+big_data_row$gender[big_data_row$gender=='Male'| big_data_row$gender=='M' |big_data_row$gender=='male'|big_data_row$gender=='MALE']<-'m'
+big_data_row <- merge(unique(big_data_row),(dospert),by="id",all = TRUE)
+big_data_row$dospert <- big_data_row$ethical + big_data_row$financial + big_data_row$health+big_data_row$recreational+big_data_row$social
+big_data_row<- big_data_row[-which(is.na(big_data_row$risk)),]
+  big_data_avg<-data.frame('id'=big_data_row$id,'gender'=big_data_row$gender,'age'=big_data_row$age,'group_name'=big_data_row$group_name,'risk_avg'=scale(big_data_row$risk),'score_avg'=big_data_row$round_score,'click_avg'=scale(big_data_row$person_click),'other_max_avg'=scale(big_data_row$other_max_score),'other_min_avg'=scale(big_data_row$other_min_score),'other_mean_avg'=scale(big_data_row$other_mean_score),'dospert'=scale(big_data_row$dospert),'financial'=scale(big_data_row$financial))
+  
+   big_data_avg$group_name2<-big_data_avg$group_name
+big_data_avg$group_name2[big_data_avg$group_name2=='ind_rsk'|big_data_avg$group_name2=='soc_rsk']<-'rsk'
+big_data_avg$group_name2[big_data_avg$group_name2=='ind_amb'|big_data_avg$group_name2=='soc_amb']<-'amb'
+
+ big_data_avg$group_name3<-big_data_avg$group_name
+big_data_avg$group_name3[big_data_avg$group_name3=='soc_rsk'|big_data_avg$group_name3=='soc_amb']<-'soc'
+big_data_avg$group_name3[big_data_avg$group_name3=='ind_amb'|big_data_avg$group_name3=='ind_rsk']<-'ind'
+  
+#####
+```
+
+```{r}
+#plots in averaging data
+library(stargazer)
+library(lme4)
+(split_plot <- ggplot(aes(big_data_avg$financial, risk_avg), data = big_data_avg) + 
+  geom_point() + 
+  facet_wrap(~ group_name) + # create a facet for each mountain range
+  xlab("score_average") + 
+  ylab("risk_average"))
+#model in average data
+smodel<-lm(risk_avg~group_name,data = big_data_avg)
+ summary(smodel)
+ 
+  stargazer(smodel, type = "text",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "")
+  
+  smodel2<-lmer(risk_avg~group_name2+(1|financial)+(1|gender)+(1|age)+(1|score_avg)+(1|other_max_avg)+(1|other_mean_avg),data = big_data_avg)
+  summary(smodel2)
+```
+
+```{r}
+big_data <- merge(unique(big_data),(dospert),by="id",all = TRUE)
+#big_data$dospert <- big_data$ethical + big_data$financial + big_data$health+big_data$recreational+big_data$social
+big_data<- big_data[-which(is.na(big_data$risk)),]
+```
+## Analysis part new
+
+```{r}
+
+ big_data$zrisk<-scale(big_data$risk)
+ big_data$zround_score<-scale(big_data$round_score)
+ big_data$zother_max_score<-scale(big_data$other_max_score)
+ big_data$zother_mean_score<-scale(big_data$other_mean_score)
+ big_data$zother_min_score<-scale(big_data$other_min_score)
+ big_data$zage<-scale(as.numeric(big_data$age))
+ big_data$zfinancial<-scale(big_data$financial)
+ #big_data$zdospert<-scale(big_data$dospert)
+ #big_data<-big_data[-which(is.na(big_data$risk)),]
+ 
+ big_data$group_name2<-big_data$group_name
+big_data$group_name2[big_data$group_name2=='ind_rsk'|big_data$group_name2=='soc_rsk']<-'rsk'
+big_data$group_name2[big_data$group_name2=='ind_amb'|big_data$group_name2=='soc_amb']<-'amb'
+
+ big_data$group_name3<-big_data$group_name
+big_data$group_name3[big_data$group_name3=='soc_rsk'|big_data$group_name3=='soc_amb']<-'soc'
+big_data$group_name3[big_data$group_name3=='ind_amb'|big_data$group_name3=='ind_rsk']<-'ind'
+ #checked
+
+# Do some plots
+
+(split_plot <- ggplot(aes(big_data$zround_score, zrisk), data = big_data) + 
+  geom_point() + 
+  facet_wrap(~ group_name) + # create a facet for each mountain range
+  xlab("round score") + 
+  ylab("risk"))
+```
+#analysis new
+```{r}
+library(ggplot2)
+library(sjPlot)
+library(lme4)
+variable_names <- list(
+  "ind_amb" = "Individual Ambiguity" ,
+  "ind_rsk" = "Individual Risk" ,
+  "soc_amb" = "Social Ambiguity" ,
+  "soc_rsk" = "Social Risk"
+  )
+
+#names(soc.labs) <- c("Social", "Individual")
+#names(rsk.labs) <- c("Risk", "Ambiguity")
+variable_labeller <- function(variable,value){
+  return(variable_names[value])
+}
+
+big_data$group_name2[big_data$group_name2=='rsk']='Risk'
+ big_data$group_name2[big_data$group_name2=='amb']='Ambiguity'
+ big_data$group_name3[big_data$group_name3=='ind']='Individual'
+ big_data$group_name3[big_data$group_name3=='soc']='Social'
+
+ggplot((big_data), aes(x= risk,  group=group_name)) + 
+    geom_bar(aes(y = ..prop..), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.6, size=2) +
+    labs(y = "Percentage", fill='risk') +
+    #facet_grid(group_name2~group_name3,labeller=variable_labeller) +
+  facet_grid(group_name2~group_name3) +
+    scale_y_continuous(labels = scales::percent)+theme_minimal()
+
+#hypothesis 1: more risky choice in risk group than ambiguity
+#group name 2 categorized risk and ambiguity
+model_rsk_vs_amb<-lmer(zrisk~group_name2+(1|id),data = big_data)
+ summary(model_rsk_vs_amb)
+tab_model(model_rsk_vs_amb)
+ #both groups have significant effect on risk-taking
+ model_soc_vs_ind<-lmer(zrisk~group_name3+(1|id),data = big_data)
+ summary(model_soc_vs_ind)
+tab_model(model_soc_vs_ind)
+
+
+ #calculate the effect size
+ r2.corr.mer <- function(m) {
+    lmfit <-  lm(model.response(model.frame(m)) ~ fitted(m))
+    summary(lmfit)$r.squared
+ }
+ #r2.corr.mer(model4r)
+wilcox.test(big_data$zrisk[big_data$group_name=='soc_rsk'|big_data$group_name=='ind_rsk'],big_data$zrisk[big_data$group_name=='soc_amb'|big_data$group_name=='ind_amb'],alternative = 'less')
+#tab_model(model3r)
+# so hypo 1 is not true and ambiguity take more risk
+
+```
+```{r}
+#hypothesis 2: more risky choice in social group than individual
+#group name 3 categorized social and individual groups
+model1s<-lm(zrisk~group_name3,data = big_data)
+ summary(model1s)
+ wilcox.test(big_data$zrisk[big_data$group_name3=='soc'],big_data$zrisk[big_data$group_name3=='ind'],alternative = 'greater')
+# so hypo 2 is true and social take more risk
+
+```
+
+
+
+```{r}
+#models
+model1<- lm(zrisk~group_name,data = big_data)
+model1<- lm(zrisk~group_name+zround_score+zother_max_score+zother_min_score+zother_mean_score,data = big_data)
+rs ~ gp + (1|id) + (1|rsc) + (1|fn) + (1|gn)
+model1<-lmer(zrisk~group_name+(1|id)+(1|gender)+(1|zage)+zround_score+(1|zdospert)+zother_max_score+zother_min_score+zother_mean_score,data = big_data)
+summary(model1)
+
+(prelim_plot <- ggplot(big_data, aes(x = group_name, y = zrisk)) +
+  geom_point() +
+  geom_smooth(method = "lm"))
+```
+
+
+```{r}
+test <- wilcox.test(big_data$financial[big_data$group_name == 'soc_rsk'],big_data$financial[big_data$group_name == 'soc_amb'])
+N <- length(big_data$financial[big_data$group_name == 'soc_rsk'])
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+  median((big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'ind_rsk']),na.rm = TRUE)
+   median((big_data$risk[big_data$group_name == 'soc_amb' | big_data$group_name == 'ind_amb']),na.rm = TRUE)
+
+
+```
+
+## Analysis part 
+#risk_taking
+```{r}
+##### risk all vs ambiguity all
+N <- length(big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'ind_rsk'])
+test <- wilcox.test(big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'ind_rsk'],big_data$risk[big_data$group_name == 'soc_amb' | big_data$group_name == 'ind_amb'])
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+  median((big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'ind_rsk']),na.rm = TRUE)
+   median((big_data$risk[big_data$group_name == 'soc_amb' | big_data$group_name == 'ind_amb']),na.rm = TRUE)
+  #####
+```
+
+
+```{r}
+##### individual all vs social all
+N <- length(big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'soc_amb'])
+test <- wilcox.test(big_data$risk[big_data$group_name == 'ind_rsk' | big_data$group_name == 'ind_amb'],big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'soc_amb'])
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+median((big_data$risk[big_data$group_name == 'soc_rsk' | big_data$group_name == 'soc_amb']),na.rm = TRUE)
+   median((big_data$risk[big_data$group_name == 'ind_rsk' | big_data$group_name == 'ind_amb']),na.rm = TRUE)
+```
+
+```{r}
+##### individual ambiguity vs individual risky
+N <- length(big_data$risk[ big_data$group_name == 'ind_amb'])
+test <- wilcox.test(big_data$risk[big_data$group_name == 'ind_rsk'],big_data$risk[big_data$group_name == 'ind_amb' ])
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+median(big_data$risk[ big_data$group_name == 'ind_amb'],na.rm = TRUE)
+   median(big_data$risk[ big_data$group_name == 'ind_rsk'],na.rm = TRUE)
+```
+
+```{r}
+##### social ambiguity vs social risky
+N <- length(big_data$risk[ big_data$group_name == 'soc_amb'])
+test <- wilcox.test(big_data$risk[big_data$group_name == 'soc_rsk'],big_data$risk[big_data$group_name == 'soc_amb' ])
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+median(big_data$risk[ big_data$group_name == 'soc_amb'],na.rm = TRUE)
+   median(big_data$risk[ big_data$group_name == 'soc_rsk'],na.rm = TRUE)
+```
+
+## plot outcome risk_taking
+```{r}
+library('ggpubr')
+library(tidyverse)
+library(lme4)
+
+#####
+#ind_amb_plot <- ggplot(data=big_ind_amb, aes(risk)) + 
+#  geom_histogram(breaks=seq(1, 4, by=.3)) + labs( x="ind_amb choice", y="count")+ geom_text(stat = 'count', aes(label = stat(count)),vjust=-0.1,size=2)  
+
+# ind_amb_plot <- ggplot(data=big_ind_amb, aes(risk)) + 
+#           geom_bar(aes(y = (..count..)/sum(..count..))) + 
+#           scale_y_continuous(labels=scales::percent) +
+#   ylab("relative frequencies") 
+# 
+# ind_amb_plot
+# 
+# ind_rsk_plot <- ggplot(data=big_ind_rsk, aes(risk)) + 
+#           geom_bar(aes(y = (..count..)/sum(..count..))) + 
+#           scale_y_continuous(labels=scales::percent) +
+#   ylab("relative frequencies") 
+# 
+# ind_rsk_plot
+# 
+# soc_amb_plot <- ggplot(data=big_soc_amb, aes(risk)) + 
+#           geom_bar(aes(y = (..count..)/sum(..count..))) + 
+#           scale_y_continuous(labels=scales::percent) +
+#   ylab("relative frequencies") 
+# 
+# soc_amb_plot 
+# 
+# soc_rsk_plot <- ggplot(data=big_soc_rsk, aes(risk)) + 
+#           geom_bar(aes(y = (..count..)/sum(..count..))) + 
+#           scale_y_continuous(labels=scales::percent) +
+#   ylab("relative frequencies") 
+# 
+# soc_rsk_plot  
+# 
+# ggarrange(ind_amb_plot,ind_rsk_plot,soc_amb_plot,soc_rsk_plot + rremove("x.text"), 
+#           labels = c("A", "B", "C",'D'),
+#           ncol = 2, nrow = 2)
+```
+
+
+```{r}
+variable_names <- list(
+  "ind_amb" = "Individual Ambiguity" ,
+  "ind_rsk" = "Individual Risk" ,
+  "soc_amb" = "Social Ambiguity" ,
+  "soc_rsk" = "Social Risk"
+  )
+
+
+variable_labeller <- function(variable,value){
+  return(variable_names[value])
+}
+
+
+
+ggplot((big_data), aes(x= risk,  group=group_name)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.6, size=2) +
+    labs(y = "Percentage", fill='risk') +
+    facet_grid(~group_name,labeller=variable_labeller) +
+    scale_y_continuous(labels = scales::percent)+theme_minimal()
+
+```
+
+#person click
+```{r}
+
+#to report result of wilcoxin test use this part
+N <- length(big_data$person_click[big_data$group_name=='soc_rsk'])
+test <- wilcox.test(big_data$person_click[big_data$group_name=='soc_rsk'],big_data$person_click[big_data$group_name=='soc_amb'])
+  
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+```
+
+# doesnt show number of zeros
+```{r}
+
+
+big_soc <- dplyr::bind_rows(big_soc_rsk,big_soc_amb)
+#           ncol = 2, nrow = 2)
+
+variable1_names <- list(
+
+  "soc_amb" = "Social Ambiguity" ,
+  "soc_rsk" = "Social Risk"
+  )
+
+
+variable_labeller1 <- function(variable,value){
+  return(variable1_names[value])
+}
+
+ggplot((big_soc), aes(x= person_click,  group=group_name)) + 
+    # with colors geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+  # without colors
+  geom_bar(aes(y = ..prop..), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.6, size=2) +
+    labs(x='Number of interactions',y = "Percentage", fill='Clicks') +
+    facet_grid(~group_name,labeller=variable_labeller1) +
+    scale_y_continuous(labels = scales::percent)+theme_minimal()
+
+socdata<- subset(big_data, group_name3=='Social')
+inddata<- subset(big_data, group_name3=='Individual')
+
+smodel2<-lmer(person_click~(group_name2)+(1|id)+zother_max_score+zround_score+(1|zfinancial),data = socdata,REML = TRUE)
+
+smodel2r<-lmer(person_click~(1|id)+zother_max_score+zround_score+(1|zfinancial),data = socdata,REML = TRUE)
+tab_model(smodel2,smodel2r)
+
+
+#####
+#soc_amb_pplot <- ggplot(data=big_soc_amb, aes(person_click)) + 
+  #geom_histogram(breaks=seq(1, 4, by=.3)) + labs( x="soc_amb person click", y="count")+ geom_text(stat = 'count', aes(label = stat(count)),vjust=-0.1,size=2)  
+  #soc_amb_pplot 
+#soc_rsk_pplot <- ggplot(data=big_soc_rsk, aes(person_click)) + 
+ # geom_histogram(breaks=seq(1, 4, by=.3)) + labs( x="soc_rsk person click", y="count")+ geom_text(stat = 'count', aes(label = stat(count)),vjust=-0.1,size=2)  
+  # soc_rsk_pplot             
+
+
+#endplot<-ggarrange(soc_amb_pplot ,soc_rsk_pplot  + rremove("x.text"), 
+ #         labels = c("A", "B"),
+  #        ncol = 2, nrow = 1)
+#endplot                       
+```
+```{r}
+# higher or lower risk-taking and number of clicks relation
+# by considering number of zeros
+
+#big_data$person_click[big_data$group_name=='soc_rsk' & is.na(big_data$person_click)] <- 0
+#big_data$person_click[big_data$group_name=='soc_amb' & is.na(big_data$person_click)] <- 0
+```
+
+
+```{r}
+#####
+# check difference between number of clicks in high and low risk taking
+N <- length(big_data$person_click[big_data$group_name=='soc_amb'& big_data$risk==1 | big_data$group_name=='soc_rsk'& big_data$risk==1])
+test <- wilcox.test(big_data$person_click[big_data$group_name=='soc_amb'& big_data$risk==1 | big_data$group_name=='soc_rsk'& big_data$risk==1],big_data$person_click[big_data$group_name=='soc_amb'& big_data$risk==4 | big_data$group_name=='soc_rsk'& big_data$risk==4])
+
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+  
+  #####
+```
+
+```{r}
+#### difference between risk taking of whom not click vs click 
+N <- length(big_data$risk[is.na(big_data$person_click & (big_data$group_name=='soc_risk' | big_data$group_name=='soc_amb'))])
+test <- wilcox.test(big_data$risk[is.na(big_data$person_click & (big_data$group_name=='soc_risk' | big_data$group_name=='soc_amb'))],big_data$risk[big_data$person_click==4|big_data$person_click==3|big_data$person_click==2|big_data$person_click==1])
+
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+  median(big_data$risk[is.na(big_data$person_click & (big_data$group_name=='soc_risk' | big_data$group_name=='soc_amb'))],na.rm = TRUE)
+  
+```
+
+
+```{r} 
+# difference in risk taking of whom do not click in risk and ambiguity groups
+N <- length((big_data$risk[is.na(big_data$person_click) & (big_data$group_name=='soc_rsk') ]))
+test <- wilcox.test((big_data$risk[is.na(big_data$person_click) & (big_data$group_name=='soc_rsk') ]),(big_data$risk[is.na(big_data$person_click) & (big_data$group_name=='soc_amb') ]))
+
+test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+  median((big_data$risk[is.na(big_data$person_click) & (big_data$group_name=='soc_rsk') ]),na.rm = TRUE)
+  
+  median((big_data$risk[is.na(big_data$person_click) & (big_data$group_name=='soc_amb') ]),na.rm = TRUE)
+```
+```{r}
+#### difference between risk taking of whom click in risk and ambiguity 
+N <- length(big_data$risk[ (big_data$group_name=='soc_rsk') & (big_data$person_click==4|big_data$person_click==3|big_data$person_click==2|big_data$person_click==1) ])
+
+test <- wilcox.test((big_data$risk[ (big_data$group_name=='soc_rsk') & (big_data$person_click==4|big_data$person_click==3|big_data$person_click==2|big_data$person_click==1) ]),(big_data$risk[ (big_data$group_name=='soc_amb') & (big_data$person_click==4|big_data$person_click==3|big_data$person_click==2|big_data$person_click==1) ]))
+
+  test$p.value
+  Zstat<-qnorm(test$p.value)
+  Zstat
+  r <- abs(Zstat)/sqrt(N)
+  r
+  c(Zstat,test$p.value,r)
+  median((big_data$risk[ (big_data$group_name=='soc_rsk') & (big_data$person_click==4|big_data$person_click==3|big_data$person_click==2|big_data$person_click==1) ]),na.rm = TRUE)
+  
+  median((big_data$risk[ (big_data$group_name=='soc_amb') & (big_data$person_click==4|big_data$person_click==3|big_data$person_click==2|big_data$person_click==1) ]),na.rm = TRUE)
+  
+```
+
+
+
+```{r}#
+library(data.table)
+#change the order of risk now higher risk is 4 and lower risk is 1
+ big_data$risk[big_data$risk==1] <- 5
+ big_data$risk[big_data$risk==4] <- 1
+ big_data$risk[big_data$risk==5] <- 4
+ big_data$risk[big_data$risk==2] <- 5
+ big_data$risk[big_data$risk==3] <- 2
+ big_data$risk[big_data$risk==5] <- 3
+ 
+ #change values of risk and score to z-score
+ big_data$zrisk <- (big_data$risk - mean(big_data$risk,na.rm = TRUE))/sd(big_data$risk,na.rm = TRUE)
+ 
+ big_data$zscore <- (big_data$round_score - mean(big_data$round_score,na.rm = TRUE))/sd(big_data$round_score,na.rm = TRUE)
+ 
+ big_data$zpclick <- (big_data$person_click - mean(big_data$person_click,na.rm = TRUE))/sd(big_data$person_click,na.rm = TRUE)
+ # relation between score was taken and next round risk or click
+ cor.test(shift(big_data$zscore),(big_data$zrisk))
+cor.test(shift(big_data$zscore[big_data$group_name=='soc_amb']),(big_data$zrisk[big_data$group_name=='soc_amb']))
+
+ cor.test(shift(big_data$zscore[big_data$group_name=='soc_rsk']),(big_data$zrisk[big_data$group_name=='soc_rsk']))
+ 
+ cor.test(shift(big_data$zscore[big_data$group_name=='ind_rsk']),(big_data$zrisk[big_data$group_name=='ind_rsk']))
+ 
+ cor.test(shift(big_data$zscore[big_data$group_name=='ind_amb']),(big_data$zrisk[big_data$group_name=='ind_amb']))
+ 
+ cor.test(shift(big_data$zscore),(big_data$zpclick))
+ cor.test(shift(big_data$zscore[big_data$group_name=='soc_amb']),(big_data$zpclick[big_data$group_name=='soc_amb']))
+ cor.test(shift(big_data$zscore[big_data$group_name=='soc_rsk']),(big_data$zpclick[big_data$group_name=='soc_rsk']))
+ 
+```
+
+```{r}
+# test average score taken in each round and next round risk taking to see if its affect risk-taking in social and individual or not
+big_data$zominscore <- (big_data$other_min_score - mean(big_data$other_min_score,na.rm = TRUE))/sd(big_data$other_min_score,na.rm = TRUE)
+
+big_data$zomaxscore <- (big_data$other_max_score - mean(big_data$other_max_score,na.rm = TRUE))/sd(big_data$other_max_score,na.rm = TRUE)
+
+big_data$zomeanscore <- (big_data$other_mean_score - mean(big_data$other_mean_score,na.rm = TRUE))/sd(big_data$other_mean_score,na.rm = TRUE)
+
+cor.test(shift(big_data$zrisk,-1),big_data$zomeanscore)
+cor.test(shift(big_data$zrisk,-1),big_data$zomaxscore)
+cor.test(shift(big_data$zrisk,-1),big_data$zominscore)
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_amb'],-1),big_data$zomeanscore[big_data$group_name=='soc_amb'])
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_amb'],-1),big_data$zomaxscore[big_data$group_name=='soc_amb'])
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_amb'],-1),big_data$zominscore[big_data$group_name=='soc_amb'])
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'],-1),big_data$zomeanscore[big_data$group_name=='soc_rsk'])
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'],-1),big_data$zomaxscore[big_data$group_name=='soc_rsk'])
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'],-1),big_data$zominscore[big_data$group_name=='soc_rsk'])
+
+# mean score
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb'],-1),(big_data$zomeanscore[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb'] - big_data$zscore[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb']))
+
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_amb'],-1),(big_data$zomeanscore[big_data$group_name=='soc_amb'] - big_data$zscore[big_data$group_name=='soc_amb']))
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'],-1),(big_data$zomeanscore[big_data$group_name=='soc_rsk'] - big_data$zscore[big_data$group_name=='soc_rsk']))
+
+
+#max score
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb'],-1),(big_data$zomaxscore[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb'] - big_data$zscore[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb']))
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_amb'],-1),(big_data$zomaxscore[big_data$group_name=='soc_amb'] - big_data$zscore[big_data$group_name=='soc_amb']))
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'],-1),(big_data$zomaxscore[big_data$group_name=='soc_rsk'] - big_data$zscore[big_data$group_name=='soc_rsk']))
+
+
+#min score
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb'],-1),(big_data$zominscore[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb'] - big_data$zscore[big_data$group_name=='soc_rsk'|big_data$group_name=='soc_amb']))
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_amb'],-1),(big_data$zominscore[big_data$group_name=='soc_amb'] - big_data$zscore[big_data$group_name=='soc_amb']))
+
+cor.test(shift(big_data$zrisk[big_data$group_name=='soc_rsk'],-1),(big_data$zominscore[big_data$group_name=='soc_rsk'] - big_data$zscore[big_data$group_name=='soc_rsk']))
+#remove NA from dospert
+#big_data<-big_data[-which(is.na(big_data$dospert)),]
+
+```
+
+
+
+```{r}
+#for probability of taken risk
+big_data$risklabel<-big_data$risk
+ big_data$risklabel[big_data$risklabel==1] <- 5
+ big_data$risklabel[big_data$risklabel==4] <- 1
+ big_data$risklabel[big_data$risklabel==5] <- 4
+ big_data$risklabel[big_data$risklabel==2] <- 5
+ big_data$risklabel[big_data$risklabel==3] <- 2
+ big_data$risklabel[big_data$risklabel==5] <- 3
+big_data$loseprobability<-1-(big_data$probability)
+   big_data$expectation<-(abs(big_data$round_score)*big_data$probability)-(abs(big_data$round_score)*big_data$loseprobability)
+# big_data$zprobrisk <- scale(big_data$probrisk)
+ggplot(big_data, aes(x=expectation, fill=group_name, color=group_name)) 
++     geom_histogram(position="identity", alpha=0.5)+facet_grid(group_name ~ .)
+
+ggplot(big_data, aes(x=zprobrisk, group=group_name)) +
+    geom_histogram(position="identity", alpha=0.5)+facet_grid(~group_name,labeller=variable_labeller)+labs(x="Probability of choice", y = "Count")
+model1<-lmer(zprobrisk~group_name+(1|id),data = big_data,REML = FALSE)
+model1r<-lmer(zprobrisk~(1|id),data = big_data,REML = FALSE)
+anova(model1,model1r)
+model2<-lmer(zprobrisk~group_name+(1|id),data = big_data,REML = FALSE)
+
+smodel<-lmer(zrisk~group_name2+(1|id)+zround_score+zfinancial+gender+zother_max_score+zother_min_score,data = socdata,REML = TRUE)
+
+imodel<-lmer(zrisk~group_name2+(1|id)+zround_score+zfinancial+gender,data = inddata,REML = TRUE)
+
+bmodel<-lmer(zrisk~group_name2+(1|id)+zround_score+zfinancial+gender,data = big_data,REML = TRUE)
+
+
+ggplot((big_data), aes(x= risklabel,  group=group_name)) + 
+    geom_histogram(position="identity", alpha=0.5) +
+
+    labs(y = "Count",x='risk label', fill='risklabel') +
+    #facet_grid(group_name2~group_name3,labeller=variable_labeller) +
+    facet_grid(group_name2~group_name3) +theme_minimal()
+
+ggplot((big_data), aes(x= winprobrisk,  group=group_name)) + 
+    geom_histogram(position="identity", alpha=0.5) +
+
+    labs(y = "Count",x='winning probability', fill='winprobrisk') +
+    #facet_grid(group_name2~group_name3,labeller=variable_labeller) +
+    facet_grid(group_name2~group_name3) +theme_minimal()
+
+
+ggplot((big_data), aes(x= expectation,  group=group_name)) + 
+    geom_histogram(position="identity", alpha=0.5) +
+
+    labs(y = "Count", fill='expectation') +
+    #facet_grid(group_name2~group_name3,labeller=variable_labeller) +
+    facet_grid(group_name2~group_name3) +theme_minimal()
+
+ggplot(socdata, aes(x=person_click, group=group_name)) +
+    geom_histogram(position="identity", alpha=0.5)+facet_grid(~group_name,labeller=variable_labeller)+labs(x="click on others", y = "Count")+theme_minimal()
+
+```
+
+
+
+
+```{r}
+model3<-lmer(scale((expectation))~(group_name2:scale(other_min_score))+(group_name2:scale(other_max_score))+(group_name2:scale(person_click))+(scale(other_min_score):person_click)+(scale(other_min_score):person_click)+(1|id),data = socdata,REML = FALSE)
+
+stargazer(model3, type = "text",
+          digits = 3,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          digit.separator = "")
+model3<-lmer(scale((other_min_score))~(group_name2)+(1|id),data = socdata,REML = FALSE)
+model1<-lmer(scale((expectation))~scale(other_max_score)+scale(other_min_score)+(1|id),data = socdata,REML = FALSE)
+model1<-lmer(scale((person_click))~scale(other_max_score)+scale(other_min_score)+(1|id),data = socdata,REML = FALSE)
+```
+
+
+##checked and work properly
+
+```{r}
+#####
+tmpscore <- array(NA,5)
+tmprisk <- array(NA,5)
+avg_soc_amb_score <- array(NA,50)
+avg_soc_amb_risk <- array(NA,50)
+for (j in 1:50){
+for (i in 1:5){
+  tmpscore[i] <- (
+big_soc_amb$round_score[big_soc_amb$round_number == j & big_soc_amb$participant_number ==i])
+  
+tmprisk[i] <- (
+big_soc_amb$risk[big_soc_amb$round_number == j & big_soc_amb$participant_number ==i])
+}
+avg_soc_amb_score[j]<- median(tmpscore)
+avg_soc_amb_risk[j]<- median(tmprisk)
+}
+
+cor.test((avg_soc_amb_risk - mean(avg_soc_amb_risk))/sd(avg_soc_amb_risk),(avg_soc_amb_score - mean(avg_soc_amb_score))/sd(avg_soc_amb_score))
+```
+
+
+
+
+
+
+
+```{r}
+#####
+
+ 
+
+soc_amb_pplot <- ggplot(data=big_person_soc_amb, aes(person_click)) + 
+  geom_histogram() + labs( x="number of social selection in ambiguity", y="count")+ geom_text(stat = 'count', aes(label = stat(count)),vjust=-0.1,size=2)  
+
+soc_rsk_pplot <- ggplot(data=big_person_soc_rsk, aes(person_click)) + 
+  geom_histogram() + labs( x="number of social selection in risky", y="count")+ geom_text(stat = 'count', aes(label = stat(count)),vjust=-0.1,size=2)
+
+ggarrange(soc_amb_pplot,soc_rsk_pplot + rremove("x.text"), 
+          labels = c("A", "B"),
+          ncol = 2)
+
+```
+
+Plots shows difference in the distribution of choices in social ambiguity.A shows individual ambiguity, B shows individual risky, C shows social ambiguity and  ind_amb_plotsoc_amb_plot,soc_rs
+```{r}
+#####
+#plot based on group choice
+library(ggplot2)
+
+# Notched box plot
+ggplot(big_data, aes(x=group_name, y=risk)) + 
+  geom_boxplot(notch=TRUE)+ labs(title="plot of choice risk by all groups", x="groups", y="choice number")
+#####
+#test for normality
+#install.packages("dplyr")
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/ggpubr")
+library("dplyr")
+library("ggpubr")
+library(ggpubr)
+shapiro.test(big_data$risk)
+# data is not normally distributed
+#it is significant thus data is not normal
+# https://www.datanovia.com/en/lessons/normality-test-in-r/
+# so hypothesis should be tested using non-parametric tests.
+##### 
+#analysis
+```
+
+
+
+
+
+## changes by time - trial by trial
+```{r}
+round_ind_amb <- array(0,50)
+for (i in round_number){
+  round_ind_amb[i] <-mean( big_ind_amb$risk[big_ind_amb$round_number ==i], na.rm = TRUE)
+}
+
+  plot(round_ind_amb,main="mean of selected options in individual_ambiguity ", 
+      xlab="round",ylab = 'mean',type = 'l')
+  
+  round_ind_rsk <- array(0,50)
+for (i in round_number){
+  round_ind_rsk[i] <-mean( big_ind_rsk$risk[big_ind_rsk$round_number ==i], na.rm = TRUE)
+}
+ 
+   plot(round_ind_rsk,main="mean of selected options in individual_risky ", 
+      xlab="round",ylab = 'mean',type = 'l')
+  
+  round_soc_amb <- array(0,50)
+for (i in round_number){
+  round_soc_amb[i] <-mean( big_soc_amb$risk[big_soc_amb$round_number ==i])
+}
+ 
+   plot(round_soc_amb,main="mean of selected options in social_ambiguity ", 
+      xlab="round",ylab = 'mean',type = 'l')
+  
+    round_soc_rsk <- array(0,50)
+for (i in round_number){
+  round_soc_rsk[i] <-mean( big_soc_rsk$risk[big_soc_rsk$round_number ==i])
+}
+    plot(round_soc_rsk,main="mean of selected options in social_risky ", 
+      xlab="round",ylab = 'mean',type = 'l')
+```
+
+
+#### Social part
+```{r}
+soc_rsk_person <- array(NA, dim=c(length(participant_data_soc_rsk),50,5))
+for (i in 1:length(participant_data_soc_rsk))
+{
+  player_number_game_data_soc_rsk[i] <- game_data_soc_rsk[[i]][["maxPlayers"]]
+}
+for (i in 1:length(participant_data_soc_rsk))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      if ((k >player_number_game_data_soc_rsk[i])) 
+      {
+        soc_rsk_person[i,j,k] <- NA
+      }
+      else{
+        if (length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]]) != 0){
+          soc_rsk_person[i,j,k] <- (length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]))
+        }
+      }
+    }
+  }
+}
+
+
+soc_amb_person <- array(NA, dim=c(length(participant_data_soc_amb),50,5))
+for (i in 1:length(participant_data_soc_amb))
+{
+  player_number_game_data_soc_amb[i] <- game_data_soc_amb[[i]][["maxPlayers"]]
+}
+for (i in 1:length(participant_data_soc_amb))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      if ((k >player_number_game_data_soc_amb[i])) 
+      {
+        soc_amb_person[i,j,k] <- NA
+      }
+      else{
+        if (length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]]) != 0){
+          soc_amb_person[i,j,k] <- (length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["socialSceneData"]][[1]][["selectedParticipantId"]]))
+        #  soc_amb_other_scores[i,j,k]
+        }
+      }
+    }
+  }
+}
+
+
+
+#soc_amb
+participant_number <-1
+group_name <- 'soc_amb'
+tmplist <- list()
+
+for (i in 1:length(participant_data_soc_amb)){
+  datalist <- list()
+  for (k in 1:player_number_game_data_soc_amb[i]) # participants
+  {
+    personclk <- array(0,50)
+    round_number <- 1:50
+    personclk <- soc_amb_person[i,round_number,k]
+    risk <- soc_amb_choice[i,round_number,k]
+        if (risk == 4){
+      probab<-prob$prob1[round_number]
+    }else if (risk == 3){
+      probab<-prob$prob2[round_number]
+    }else if (risk == 2){
+      probab<-prob$prob3[round_number]
+    }else if (risk == 1){
+      probab<-prob$prob4[round_number]
+    }
+    d <- (data.frame('participant_number'= participant_number,'group_name'= group_name,'round_number'= round_number,'person_click'= personclk,'risk'=risk,'probability'=probab,'data_gathering_group'=i,'data_gathering_participant_id'= k))
+    datalist[[k]] <- d
+    participant_number <- participant_number + 1
+  }
+  tmplist[[i]] <- dplyr::bind_rows(datalist)
+}
+big_person_soc_amb <- dplyr::bind_rows(tmplist)
+big_person_soc_amb$person_click[round_number == 50] <- 0
+
+##########
+```
+
+
+```{r}
+#####
+## social risk choice counting
+player_number_game_data_soc_rsk <- NULL
+tmprounddata <- NULL
+soc_rsk_choice <- array(NA, dim=c(5,50,5))
+soc_rsk_score <- array(NA, dim=c(5,50,5))
+participant_id_soc_rsk <- array(NA, dim=c(5,50,5)) 
+rounddata <- NULL
+testdata <- NULL
+choice_number <- NULL
+
+for (i in 1:length(participant_data_soc_rsk))
+{
+  player_number_game_data_soc_rsk[i] <- game_data_soc_rsk[[i]][["maxPlayers"]]
+}
+#group of participants
+for (i in 1:length(participant_data_soc_rsk))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      if ((k >player_number_game_data_soc_rsk[i])) 
+      {
+        soc_rsk_choice[i,j,k] <- NA
+        soc_rsk_score[i,j,k] <- NA
+      }
+      else{
+        if (length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]]) != 0){
+          soc_rsk_choice[i,j,k] <- (length(game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["selectedColors"]]))
+          soc_rsk_score[i,j,k] <-( game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]])           participant_id_soc_rsk[i,j,k] <- game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["clientId"]]
+        }
+      }
+      
+    }
+  }
+}
+######
+```
+
+
+```{r}
+######
+#soc_rsk
+participant_number <-1
+group_name <- 'soc_rsk'
+tmplist <- list()
+
+for (i in 1:length(participant_data_soc_rsk)){
+  datalist <- list()
+  for (k in 1:player_number_game_data_soc_rsk[i]) # participants
+  {
+    personclk <- array(0,50)
+    round_number <- 1:50
+    trialscore<-soc_rsk_score[i,round_number,k]
+    personclk <- soc_rsk_person[i,round_number,k]
+    risk <- soc_rsk_choice[i,round_number,k]
+        if (risk == 4){
+      probab<-prob$prob1[round_number]
+    }else if (risk == 3){
+      probab<-prob$prob2[round_number]
+    }else if (risk == 2){
+      probab<-prob$prob3[round_number]
+    }else if (risk == 1){
+      probab<-prob$prob4[round_number]
+    }
+    id <- participant_id_soc_rsk[i,round_number,k]
+    d <- (data.frame('participant_number'= participant_number,'id'=id,'group_name'= group_name,'round_number'= round_number,'round_score'=trialscore,'person_click'= personclk,'risk'=risk,'probability'=probab,'data_gathering_group'=i,'data_gathering_participant_id'= k))
+    datalist[[k]] <- d
+    participant_number <- participant_number + 1
+  }
+  tmplist[[i]] <- dplyr::bind_rows(datalist)
+}
+big_person_soc_rsk <- dplyr::bind_rows(tmplist)
+big_person_soc_rsk$person_click[round_number == 50] <- 0
+#big_person <-  dplyr::bind_rows(big_person_soc_rsk,big_person_soc_amb)
+```
+
+```{r}
+
+
+ggplot(big_person, aes(x=group_name, y=person_click)) + 
+  geom_boxplot(notch=TRUE) +  ggtitle("Number of selected person by risk and ambiguity groups") +
+  xlab("group") + ylab("number of selected person")
+
+person_res_ra <- wilcox.test(person_click ~ group_name, data = big_person,  exact = FALSE)
+person_res_ra
+
+ggplot(data=big_person_soc_amb, aes(person_click)) + 
+  geom_histogram() + labs(title="Histogram for person clicks in social_ambiguity", x="number of person click", y="count")+ geom_text(stat = 'count', aes(label = stat(count), vjust = -0.2)) 
+
+ggplot(data=big_person_soc_rsk, aes(person_click)) + 
+  geom_histogram() + labs(title="Histogram for person clicks in social_risky", x="number of person click", y="count") + geom_text(stat = 'count', aes(label = stat(count), vjust = -0.2)) 
+
+round_person_soc_amb <- array(0,50)
+for (i in round_number){
+  round_person_soc_amb[i] <-mean( big_person_soc_amb$person_click[big_person_soc_amb$round_number ==i])
+}
+
+plot(round_person_soc_amb,main="mean of selected person in social_ambiguity ", 
+     xlab="round",ylab = 'mean',type = 'l')
+
+round_person_soc_rsk <- array(0,50)
+for (i in round_number){
+  round_person_soc_rsk[i] <-mean( big_person_soc_rsk$person_click[big_person_soc_rsk$round_number ==i])
+}
+
+plot(round_person_soc_rsk,main="mean of selected person in social_risky ", 
+     xlab="round",ylab = 'mean',type = 'l')
+
+
+
+```
+The difference between risk and ambiguity is significant by p_value `r person_res_ra$p.value`. In social ambiguity they click more on the other people.
+Trial by trial plot shows a decrease in the number of click on the other people in risky situation from the beginning. 
+
+```{r}
+# check whether click on others leads more risk-taking or not
+cor.test(big_person_soc_amb$person_click[big_person_soc_amb$person_click != 0],big_person_soc_amb$risk[big_person_soc_amb$person_click != 0])
+
+cor.test(big_person_soc_rsk$person_click[big_person_soc_rsk$person_click != 0],big_person_soc_rsk$risk[big_person_soc_rsk$person_click != 0])
+#no click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 0])
+#one click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 1])
+#two click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 2])
+#three click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 3])
+#four click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 4])
+
+#no click histogram
+hist(big_person_soc_amb$risk[big_person_soc_amb$person_click == 0])
+#one click histogram
+hist(big_person_soc_amb$risk[big_person_soc_amb$person_click == 1])
+#two click histogram
+hist(big_person_soc_amb$risk[big_person_soc_amb$person_click == 2])
+#three click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 3])
+#four click histogram
+hist(big_person_soc_rsk$risk[big_person_soc_amb$person_click == 4])
+
+
+wilcox.test(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 4],big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 0])
+
+wilcox.test(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 4],big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 1])
+
+wilcox.test(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 4],big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 2])
+
+wilcox.test(big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 4],big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 3])
+
+wilcox.test(big_person_soc_amb$risk[big_person_soc_amb$person_click == 4],big_person_soc_amb$risk[big_person_soc_amb$person_click == 0])
+
+wilcox.test(big_person_soc_amb$risk[big_person_soc_amb$person_click == 1],big_person_soc_amb$risk[big_person_soc_amb$person_click == 4],alternative = 'greater')
+```
+Results show significant negative correlation between number of click and risk-taking in the social ambiguity condition but not in the social risk condition. It shows people who click on the others take less risk than the others in ambiguity condition. 
+
+```{r}
+wilcox.test(big_person_soc_rsk$risk[big_person_soc_rsk$person_click],big_person_soc_amb$risk[big_person_soc_amb$person_click])
+
+wilcox.test(big_person_soc_amb$risk[big_person_soc_amb$person_click == 0 || big_person_soc_amb$person_click == 1 || big_person_soc_amb$person_click == 2 || big_person_soc_amb$person_click == 3 || big_person_soc_amb$person_click == 4],big_person_soc_rsk$risk[big_person_soc_rsk$person_click == 0 || big_person_soc_rsk$person_click == 1 || big_person_soc_rsk$person_click == 2 || big_person_soc_rsk$person_click == 3 || big_person_soc_rsk$person_click == 4])
+
+wilcox.test(big_person_soc_amb$risk[big_person_soc_amb$person_click ==3],big_person_soc_amb$risk[big_person_soc_amb$person_click ==4])
+
+wilcox.test(big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==4],big_person_soc_amb$risk[big_person_soc_amb$person_click ==4])
+
+chrsk_amb_clk4 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==4]
+chrsk_amb_clk3 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==3]
+chrsk_amb_clk2 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==2]
+chrsk_amb_clk1 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==1]
+chrsk_amb_clk0 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==0]
+
+chrsk_rsk_clk4 <- big_person_soc_rak$risk[big_person_soc_rsk$person_click ==4]
+chrsk_rsk_clk3 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==3]
+chrsk_rsk_clk2 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==2]
+chrsk_rsk_clk1 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==1]
+chrsk_rsk_clk0 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==0]
+boxplot(chrsk_rsk_clk4,chrsk_rsk_clk3,chrsk_rsk_clk2,chrsk_rsk_clk1,chrsk_rsk_clk0,chrsk_amb_clk4,chrsk_amb_clk3,chrsk_amb_clk2,chrsk_amb_clk1,chrsk_amb_clk0)
+ch_click_data <- data.frame()
+boxplot(big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==4],big_person_soc_amb$risk[big_person_soc_amb$person_click ==4])
+
+
+client_id_soc_rsk <- NA
+client_id_soc_amb <- NA
+for (i in 1:5){
+ client_id_soc_rsk[i] <- game_data_soc_rsk[[1]][["roundData"]][[1]][["participantRoundData"]][[i]][["clientId"]]
+ client_id_soc_amb[i] <- game_data_soc_amb[[1]][["roundData"]][[1]][["participantRoundData"]][[i]][["clientId"]]
+  
+}
+# giving index of id
+round_score_rsk <- array(NA,c(5,50,5))
+for (i in 1:5){ # group at the time of running
+  for (j in 1:50) {# rounds
+    for(k in 1:5){#participants
+       round_score_rsk[i,j,k] <- game_data_soc_rsk[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]] 
+    }
+  }
+}
+match('0GQP9v-YC',client_id_soc_amb)
+
+
+```
+```{r}
+chrsk_amb_clk4 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==4]
+chrsk_amb_clk3 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==3]
+chrsk_amb_clk2 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==2]
+chrsk_amb_clk1 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==1]
+chrsk_amb_clk0 <- big_person_soc_amb$risk[big_person_soc_amb$person_click ==0]
+
+chrsk_rsk_clk4 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==4]
+chrsk_rsk_clk3 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==3]
+chrsk_rsk_clk2 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==2]
+chrsk_rsk_clk1 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==1]
+chrsk_rsk_clk0 <- big_person_soc_rsk$risk[big_person_soc_rsk$person_click ==0]
+boxplot(chrsk_rsk_clk0,chrsk_rsk_clk1,chrsk_rsk_clk2,chrsk_rsk_clk3,chrsk_rsk_clk4,chrsk_amb_clk0,chrsk_amb_clk1,chrsk_amb_clk2,chrsk_amb_clk3,chrsk_amb_clk4,ylab ='selected option', xlab =' \n \n risky / ambiguity social click numbers',
+        names = c("0", "1", "2", "3",'4',"0", "1", "2", "3",'4'),main = "Risky choice in social ambiguity and social risky groups \n by considering social clicks",at =c(1,2,3,4,5,7,8,9,10, 11))
+
+
+
+```
+```{r}
+#Dospert data
+#TO DO
+#check remove data
+#implement scores
+dospert <- read.csv("~/Downloads/Domain-Specific Risk-Taking (Adult) Scale – Risk Taking_October 6, 2020_22.58.csv", header=TRUE)
+Dospert <- data.frame(id=dospert$userID,Q1=dospert$Q1,Q2=dospert$Q2,Q3=dospert$Q3,Q4=dospert$Q4,Q5=dospert$Q5,Q6=dospert$Q6,Q7=dospert$Q7,Q8=dospert$Q8,Q9=dospert$Q9,Q10=dospert$Q10,Q11=dospert$Q11,Q12=dospert$Q12,Q13=dospert$Q13,Q14=dospert$Q14,Q15=dospert$Q15,Q16=dospert$Q16,Q17=dospert$Q17,Q18=dospert$Q18,Q19=dospert$Q19,Q20=dospert$Q20,Q21=dospert$Q21,Q22=dospert$Q22,Q23=dospert$Q23,Q24=dospert$Q24,Q25=dospert$Q25,Q26=dospert$Q26,Q27=dospert$Q27,Q28=dospert$Q28,Q29=dospert$Q29,Q30=dospert$Q30)
+
+```
+
+find highest outcome of others in each round or average outcome of others 
+check their effect on risk-taking of one person in each round. It is true that they don't click but they see the others outcome without click and it could leads to competition.
+
+```{r}
+#####
+## social ambiguity choice counting
+player_number_game_data_soc_amb <- NULL
+tmprounddata <- NULL
+soc_amb_choice <- array(NA, dim=c(5,50,5))
+soc_amb_score <- array(NA, dim=c(5,50,5))
+participant_id_soc_amb <- array(NA, dim=c(5,50,5)) 
+rounddata <- NULL
+testdata <- NULL
+choice_number <- NULL
+
+for (i in 1:length(participant_data_soc_amb))
+{
+  player_number_game_data_soc_amb[i] <- game_data_soc_amb[[i]][["maxPlayers"]]
+}
+#group of participants
+for (i in 1:length(participant_data_soc_amb))# loop over group of participants play at the same time1
+{ 
+  for (j in 1:50) # loop over rounds
+  {
+    for (k in 1:5 ) #loop over number of participants in each test
+    { 
+      if ((k >player_number_game_data_soc_amb[i])) 
+      {
+        soc_amb_choice[i,j,k] <- NA
+        soc_amb_score[i,j,k] <- NA
+      }
+      else{
+        if (length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]]) != 0){
+          soc_amb_choice[i,j,k] <- (length(game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["selectedColors"]]))
+          soc_amb_score[i,j,k] <-( game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["bubbleSceneData"]][[1]][["result"]])           participant_id_soc_amb[i,j,k] <- game_data_soc_amb[[i]][["roundData"]][[j]][["participantRoundData"]][[k]][["clientId"]]
+        }
+      }
+      
+    }
+  }
+}
+
+
+soc_amb_data <- data.frame(pid=participant_id_soc_amb,score=soc_amb_score,risk=soc_amb_choice,pclk = soc_amb_person)
+```
+
+
+
+
+

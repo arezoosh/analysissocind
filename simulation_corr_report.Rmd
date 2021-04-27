@@ -1,0 +1,311 @@
+---
+title: "Calculations of decision making problem"
+output:
+  pdf_document: default
+  html_document: default
+fig_caption: yes
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# required packages
+#install.packages("tidyverse")
+#install.packages('psych')
+library(ggplot2)
+library(psych)
+```
+## Bandit Task
+This part simulates values of the bandit task using gittin's index. Each arm has its own gittin index. I built payout for arms and use them for simulation. 'explorebandit' keeps exploratory/exploitative of each round with binary (1/0) variables. It is 0 when selects from arm A and 1 when selects from arm B.
+```{r}
+
+totalround <- 20 # number of rounds
+simsize <- 50 # number of simulation/participants
+goodorbad <- 0.5
+goodpercent <- 0.7
+badpercent <- 0.3
+#number of high numbers in arm B
+totalhighB <- (goodorbad * totalround * goodpercent ) + ((1-goodorbad) * totalround * badpercent)
+#number of low numbers in arm B
+totallowB <- totalround- totalhighB
+gittinA <- matrix(ncol = simsize)
+gittinB <- matrix(ncol = simsize)
+exploitnoA <- matrix(ncol = simsize)
+exploitnoB <- matrix(ncol = simsize)
+explorenoA <- matrix(ncol = simsize)
+explorenoB <- matrix(ncol = simsize)
+exploitA <- matrix(ncol = totalround,nrow=simsize)
+exploitB <- matrix(ncol = totalround,nrow=simsize)
+outbandit <- matrix(ncol = totalround,nrow=simsize)
+ 
+outA <- 7900 # payout of arm A-fixed arm
+# build outcome for B
+highB <- 15800 # highest payout of arm B
+lowB <- 0 # lowest payout of arm B
+#build good part of arm B's payout- 70% highest value,30% zero
+goodB <- sample(c(lowB,highB),totalround/2,prob = c(0.3,0.7),replace = TRUE)
+#build bad part of arm B's payout- 30% highest value,70% zero
+badB <- sample(c(lowB,highB),totalround/2,prob = c(0.7,0.3),replace = TRUE)
+#payout behind arm B
+outB <- c(goodB,badB)
+cutpoint <- 0
+```
+One arm has a single type (A) while the other (B) has two types. Specifically, the fixed arm yields a payoff of `r outA` points if it is selected. The uncertain arm either yields a good or bad payoffs with the probability of $0.5$. The probability of the good type has a high payoff is set to $g = 0.7$. Consequently the probability of the bad type has a high payoff set to $n = 0.3$ similar to the banks1997's study. The values for the high payoff is `r highB` and the bad payoff is $0$.
+```{r}
+for (j in 1:simsize) 
+  {
+outB <- c(goodB,badB) 
+i<-1
+gittinA[j] <- 0
+gittinB[j] <- 0
+exploitA[j,1] <- 0
+exploitA[j,1] <- 0
+
+  while(length(outB) > 0 && i < totalround +1) #loop over rounds
+    {
+      
+      if (cutpoint > gittinB[j])
+        {
+          exploitA[j,i] <- 1
+          outbandit[j,i] <- outA
+          i <- i+1
+         }
+      else if (cutpoint < gittinB[j])
+        {
+          exploitB[j,i] <- 1
+         outbandit[j,i] <- sample(outB,1)
+         outB <- outB[-match(outbandit[j,i],outB)]
+   # eliminate captured number
+    #check seen number
+  
+          if (outbandit[j,i] == 0)
+            {
+              totallowB <- totallowB -1 
+              gittinB[j] <- gittinB[j] - 1 
+             } else {
+               totalhighB <- totalhighB -1 
+               gittinB[j] <- gittinB[j] + 1 
+             }
+          i <- i+1
+        }
+      else if (cutpoint == gittinB[j])
+        {
+         rndchoice <- sample(c(0,1),1)
+         if (rndchoice==1){
+            exploitB[j,i] <- 0
+            outbandit[j,i] <- sample(outB,1)
+            outB <- outB[-match(outbandit[j,i],outB)]
+            # eliminate captured number
+           #check seen number
+            if (outbandit[j,i] == 0)
+               {
+                totallowB <- totallowB - 1    #counter for total                   low numbers
+                gittinB[j] <- gittinB[j] - 1  
+
+                } else {
+                totalhighB <- totalhighB -1   # counter for total                   high numbers
+                gittinB[j] <- gittinB[j] + 1 
+                }
+          } else{
+            exploitA[j,i] <- 0
+             outbandit[j,i] <- outA
+
+                }
+          i <- i+1
+        }
+    }
+
+}
+for (j in 1:simsize) 
+  {
+
+  tmpA <- hist(exploitA[j,],plot = FALSE)
+  explorenoA[j] <- tmpA$counts[tmpA$counts != 0][1]
+  exploitnoA[j] <- tmpA$counts[tmpA$counts != 0][2]
+
+  tmpB <- hist(exploitB[j,],plot = FALSE)
+  explorenoB[j] <- tmpB$counts[tmpB$counts != 0][1]
+  exploitnoB[j] <- tmpB$counts[tmpB$counts != 0][2]
+}
+explorebandit <- outbandit
+explorebandit[which((explorebandit==15800))] <- 1
+explorebandit[which((explorebandit==0))] <- 1
+explorebandit[which((explorebandit==7900))] <- 0
+exploit_A_mean <- mean(exploitnoA,na.rm = TRUE)
+exploit_B_mean <- mean(exploitnoB,na.rm = TRUE)
+explore_A_mean <- mean(explorenoA,na.rm = TRUE)
+explore_B_mean <- mean(explorenoB,na.rm = TRUE)
+hist(exploitnoA,main = paste("Histogram of exploitation in arm A"),xlab = 'Selected times', ylab='Frequency')
+hist(exploitnoB,main = paste("Histogram of exploitation in arm B"),xlab = 'Selected times', ylab='Frequency')
+hist(explorenoA,main = paste("Histogram of exploration in arm A"),xlab = 'Selected times', ylab='Frequency')
+hist(explorenoB,main = paste("Histogram of exploration in arm B"),xlab = 'Selected times', ylab='Frequency')
+hist(outbandit, main = paste("Histogram of selected arm values"),xlab = 'Selected value', ylab='Frequency')
+
+plot(colMeans(outbandit),main = paste('simulation of mean of the selected outcome over one round'),xlab = 'round',ylab = 'mean selected value')
+lines(1:totalround, colMeans(outbandit))
+```
+When an agent, knows the result of playing an arm and makes its choice based on this to increase payoff, it labels as the exploitative choice. Gittin index labels arms repeatedly based on agent’s prior information while doing the task. This index updates based on the result of the selected arm. When arm B’s gittin index is higher than the cut point, this arm is selected. But when this value is lower than the cut point, arm A is selected. When none of the above are true, one arm selects randomly. Here, choosing arm A categorized as exploitative and arm B categorized as exploratory.  
+(In this simulation cut point is fixed to `r cutpoint`)
+For the number of `r simsize` times, simulation of chosen arm relating to the Gittin index is done. At first, gittin index of the arm B is equal to the cutpoint. Thus choosing one arm is random and it is labeled as exploration. If selected arm was B and resulted a higher outcome `r highB`, the gittin index of arm B is increased by $1$. But if the payoff of selecting this arm is $0$, the gittin index of arm B decreases by $1$. It doesn't affect arm A gittin's and if arm A was chosen randomly, its gittin index doesn't change (It is always constant).
+
+This process of selection repeats for `r totalround` and agent choose the arm with the higher gittin's index and update this value based on the outcome. After selection of each value, the selected number is removed from total values and its related counter decreased. 
+
+For each agent (total `r simsize`) I count number of exploration and exploitation over each arm. Figures show their histogram. The last figure shows average outcome for each round over all agents.
+
+## Visual Task
+This part simulates values of the visual task.
+```{r}
+#initialization of values
+total <- 132
+highper <- 10/100
+lowper <- 90/100
+
+```
+
+```{r}
+#make high and low sequences
+fixed <- sample(1350:1650,1)
+lowval <- 1001
+highval <- 16501
+rangeval <- 299
+seqlow <- seq(lowval,lowval+rangeval)
+seqhigh <- seq(highval,highval+rangeval)
+```
+to simulate task space options, the first step was to produce unique values that were needed to put on the task’s screen (`r total` random values, `r highper`% from higher [`r highval`,`r highval+rangeval`] and `r lowper`% from lower [`r lowval`,`r lowval+rangeval`] ranges).
+The fixed value set to be lower than higher range and higher than lower range (`r fixed`). The lower range starts from `r lowval` for `r rangeval` numbers. The higher range starts from `r highval` for `r rangeval` numbers. seqlow matrix has the samples from the lower range values and seqhigh has the higher range values.
+```{r}
+#sampling for the required values
+
+samplehigh <- sample(seqhigh,size = round(total*highper), replace = FALSE)
+samplelow <- sample(seqlow,size = round(total*lowper), replace = FALSE)
+#visualdata has the values of the visual task
+visualdata1 <- (c(samplehigh,samplelow))
+#mixed values
+visualdata <- sample(visualdata1)
+rm(visualdata1,seqhigh,seqlow,samplehigh,samplelow)
+```
+sampling have done for the required values. `r round(total*highper)` numbers from upper range and `r round(total*lowper)` numbers are sampled from lower range without replacement. Then data were concatenate and mixed and saved as visualdata for one round.
+
+
+## Risk neutral decision maker
+```{r}
+
+#sampling many times over dynamic capturing
+
+#simsize <- 1000
+identification_time <- 0.1 # at least 0.1s is needed to identify a target \cite{kotowicz2010time}- 
+dectime <- 1 # reducing point time in seconds
+HIGH <- matrix( nrow = simsize , ncol = totalround) #keep highest sampled value
+exptHIGH <- matrix( nrow = simsize , ncol = totalround) #keep highest expectation
+explorevisual <- matrix( nrow = simsize , ncol = totalround)
+l <- matrix( nrow = simsize , ncol = totalround) #count sampling from lower range
+h <- matrix( nrow = simsize , ncol = totalround) #count sampling from higher range
+counter <- matrix( nrow = simsize , ncol = totalround) # keep track of time for decreasing from fixed value
+
+```
+This part simulates capturing and choosing behaviors of a risk-neutral decision maker that only relies on the expected value of the options.
+As Kotowicz et al. \cite{kotowicz2010time} suggested at least `r identification_time`s is needed to identify a target, thus sampling each option set to take `r identification_time` seconds. It will change by the average of sampling time after pilot study.
+The fixed value is decreased after passing `r dectime`.
+The highest temporal value is kept in HIGH and Its expected value in exptHIGH. l, and h are counted sampling numbers from lower and higher ranges respectively. Counter variable tracks when reaching to decreasing time to decrease from the fixed value. explorevisual keeps being exploratory or exploitative of a round. It is 0 when participants select fixed value and 1 otherwise.
+
+
+```{r}
+for (j in 1:totalround){
+for (i in 1:simsize){ # number of simulation
+  tmpdata <- visualdata
+  n <- total
+  totalhigh <- round(total*highper)
+  totallow <- round(total*lowper)
+  exptHIGH[i,j] <- fixed # first expectation is for the fixed value
+  HIGH[i,j] <- fixed # first highest is the fixed value
+  explorevisual[i,j] <- 0
+  l[i,j] <- 0
+  h[i,j] <- 0
+  counter[i,j] <- 2 # because of the time passes first for choosing the fixed item
+
+  #simulate sampling of a risk netral person
+  while (n >0){ # count over values
+    if(totalhigh+totallow == 0){
+      break
+    }
+    tmpsample <- sample(tmpdata,size = 1) # capture a value
+    indices <- which(tmpsample==tmpdata) # find captured number
+    tmpdata <- tmpdata[-indices] # eliminate captured number
+    #check seen number
+    counter[i,j] <- counter[i,j] + identification_time
+    
+    if ((tmpsample >= highval) && (totalhigh+totallow != 0)) 
+      
+    { # seen value comes from higher range
+      probtmpsample <- totalhigh/(totalhigh+totallow)
+      h[i,j] <- h[i,j] + 1
+      totalhigh <- totalhigh - 1
+      dh <- 1
+      dl <- 0
+    }
+    if ((tmpsample < highval) && (totalhigh+totallow != 0))
+    {  # seen value comes from lower range
+      probtmpsample <- totallow/totalhigh+totallow
+      l[i,j] <- l[i,j] + 1
+      totallow <- totallow - 1
+      dh <- 0
+      dl <- 1
+        if ((HIGH[i,j] == fixed) && (counter[i,j] >= dectime))
+           { # seen was from lower range and reach to reducing time from fixed
+          explorevisual[i,j] <- 0
+                break 
+           }
+    }
+    if ((tmpsample * probtmpsample >= exptHIGH[i,j]) && (probtmpsample != Inf))
+    { # higher than previus expected value
+      exptHIGH[i,j] <- tmpsample * probtmpsample
+      HIGH[i,j] <- tmpsample 
+      explorevisual[i,j] <- 1
+    }
+    if ((tmpsample * probtmpsample < exptHIGH[i,j]) && (probtmpsample != Inf))
+    { # lower than previus expected value
+      if (dl!=1){break} # finish if it's lower than previus high
+    }
+
+    n <- n - 1 # ready for the next value
+  }
+}
+}
+```
+To make a sense of how many points a risk neutral decision maker will sample and how much the sampling gives in the end this part simulates decision-maker's behavior `r simsize` times. A decision-maker decides repeatedly whether to stop search or continue. 
+It starts by choosing fixed value as the highest value (HIGH). Then it continues by searching options one by one to find one with the higher expected value than the previous one. By getting a draw from the lower interval, searching will continue until it gets close to the decreasing time. If until then a participant can't find a higher value, she return to the fixed option.
+If the seen value belongs to the higher interval, its expected value calculate by the number of higher interval divided by the number of total values. On the other hand, if it belongs to the lower interval its expectation calculates by the division of the number of lower interval values over total values. After each draw one decreases from the number of related low/high interval and also overall numbers. If the expected value of the found value is higher than the previous one, HIGH value is updated to the new one. If the draw does not belong to the upper bound, HIGH value remains unchanged. In both mentioned conditions searching continues. But when the value is chosen from the upper bound and is not higher than the previous HIGH value, searching is terminated.
+
+In this part of code n holds the total number of values presenting on the screen. From them totalhigh keeps the number of values in the higher range and totallow keeps the number of values in the lower range. exptHIGH is for expected value and HIGH keeps the higher value of capturing.
+The first loop is for simulation. The second loop counts the number of captured values. After capturing, this value eliminated from the total values because it has seen and also an identification time is added to the time counter.
+Based on the dependency of the value to the higher or lower ranges, its probability calculates. After this, if this value belongs to the higher range, one adds to the counter of higher values and one eliminates from the total higher range. On the other hand, if it belongs to the lower range, one adds to the counter of lower values and one eliminates from total lower ranges. In this condition capturing is stopped if the decision-maker reaches the decreasing time and has not found any high values. 
+If the sample's expected value is higher than the last expected value, HIGH and exptHIGH are updated by the higher one. If this value is from the higher range and lower than the previous expected value, searching is aborted. After checking these conditions another value is sampled. This procedure continues until one of the above-mentioned finishing conditions is true or all values are captured. 
+This process repeats for `r simsize` times.
+
+# simulated correlation between exploration index in two tasks
+```{r}
+
+rcorboth <- matrix(NA, nrow = simsize,ncol = 2)
+for (i in 1:simsize)
+  {
+corbothtemp <- corr.test(explorebandit[i, ],explorevisual[i, ],use = "complete",method="pearson",adjust="holm", 
+alpha=.05)
+rcorboth[i,1]<- corbothtemp$r
+rcorboth[i,2]<- corbothtemp$p
+}
+coromit <- na.omit(rcorboth)
+rcorboth[is.na(rcorboth)] <- 0
+#significancy
+#proportion of significant correlation
+sig2 <- length(which(coromit[,2] < 0.05))/nrow(coromit)
+#proportion of non significant correlation
+nsig2 <- length(which(coromit[,2] > 0.05))/nrow(coromit)
+```
+proportion of significant correlation is `r sig2` and the proportion of non significant correlation is `r nsig2`
+
+
+
